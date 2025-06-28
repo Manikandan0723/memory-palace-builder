@@ -8,3 +8,5 @@ google-generativeai
 python-dotenv
 deep-translator
 streamlit-lottie
+setuptools
+gcloud
