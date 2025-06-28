@@ -2,3 +2,4 @@
 serviceAccountKey.json
 .streamlit/secrets.toml
 firebase_config.json
+__pycache__/
