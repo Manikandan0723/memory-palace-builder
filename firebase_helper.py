@@ -1,16 +1,10 @@
-# firebase_helper.py
 import pyrebase
 import json
 import os
-from dotenv import load_dotenv
-
-load_dotenv()
+import streamlit as st
 
 def init_firebase():
-    firebase_config_path = os.getenv("FIREBASE_CONFIG") or "firebase_config.json"
-
-    with open(firebase_config_path) as f:
-        config = json.load(f)
-
+    # Get the config JSON string from secrets and parse it
+    config = json.loads(st.secrets["FIREBASE_CONFIG"])
     firebase = pyrebase.initialize_app(config)
     return firebase
