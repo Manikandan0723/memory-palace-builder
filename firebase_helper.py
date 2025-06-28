@@ -1,5 +1,5 @@
-import pyrebase
 import streamlit as st
+import pyrebase
 
 def init_firebase():
     config = dict(st.secrets["firebase"])
