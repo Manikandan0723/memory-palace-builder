@@ -30,8 +30,9 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 init_gemini(GEMINI_API_KEY)
 
 if not firebase_admin._apps:
-    cred = credentials.Certificate(st.secrets["firebase_admin"])
+    cred = credentials.Certificate(dict(st.secrets["firebase_admin"]))
     firebase_admin.initialize_app(cred)
+
 db = firestore.client()
 
 # --- UI Setup ---
