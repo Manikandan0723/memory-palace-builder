@@ -263,7 +263,7 @@ elif menu == "Generate" and "user" in st.session_state:
         ]
 
         choice = st.selectbox("📍 Choose a memory palace location", locations, key="location_choice")
-        location = st.text_input("📝 Describe your own place") if choice == "✍️ Other (let me type)" else choice
+        location = st.text_input("📝 Describe your own place", key="custom_location") if choice == "✍️ Other (let me type)" else choice
 
     with col2:
         from streamlit_lottie import st_lottie
@@ -274,46 +274,44 @@ elif menu == "Generate" and "user" in st.session_state:
         if not topic or not location:
             st.warning("⚠️ Please enter both a topic and a location.")
         else:
-            try:
-                with st.spinner("Generating memory palace... Please wait (up to 30 seconds)..."):
-                    try:
-                        # Use st.time() if needed to measure
-                        scene = generate_palace_scene(prompt)
-                        st.success("✅ Memory Palace Generated")
-                    except Exception as e:
-                        st.error("❌ Reached Today Limit or the request timed out.")
-                        st.exception(e)  # Optional for debugging
+            prompt = (
+                f"Imagine a vivid, surreal, and fun scene where the concept of '{topic}' is memorably placed inside "
+                f"'{location}' as part of a memory palace. Do not be logical — be imaginative and symbolic."
+            )
 
-                st.success("✅ Memory Palace Generated")
-                st.markdown("### 🧠 English")
-                st.write(scene)
+            with st.spinner("Generating memory palace... Please wait (up to 30 seconds)..."):
+                try:
+                    scene = generate_palace_scene(prompt)
+                    st.success("✅ Memory Palace Generated")
+                    st.markdown("### 🧠 English")
+                    st.write(scene)
 
-                # Optional translation
-                lang_code = st.session_state.get("lang_code", "en")
-                user_lang = st.session_state.get("user_language", "English")
-
-                if lang_code != "en":
-                    translated_scene = translate_text(scene, lang_code)
-                    st.markdown(f"### 🌐 Translated ({user_lang})")
-                    st.write(translated_scene)
-                else:
+                    # Optional translation
+                    lang_code = st.session_state.get("lang_code", "en")
+                    user_lang = st.session_state.get("user_language", "English")
                     translated_scene = ""
 
-                # Save to Firestore
-                db.collection("users").document(st.session_state["user"]["localId"]).collection("palaces").add({
-                    "topic": topic,
-                    "scene": scene,
-                    "translated_scene": translated_scene,
-                    "location": location,
-                    "created_at": datetime.utcnow()
-                })
+                    if lang_code != "en":
+                        translated_scene = translate_text(scene, lang_code)
+                        st.markdown(f"### 🌐 Translated ({user_lang})")
+                        st.write(translated_scene)
 
-                st.success("📂 Palace saved to your collection!")
+                    # Save to Firestore
+                    db.collection("users").document(
+                        st.session_state["user"]["localId"]
+                    ).collection("palaces").add({
+                        "topic": topic,
+                        "scene": scene,
+                        "translated_scene": translated_scene,
+                        "location": location,
+                        "created_at": datetime.utcnow()
+                    })
 
-            except Exception as e:
-                st.error("❌ Reached Today Limit or an error occurred.")
-                st.exception(e)  # Show details for debugging (can remove in prod)
+                    st.success("📂 Palace saved to your collection!")
 
+                except Exception as e:
+                    st.error("❌ Reached Today Limit or the request timed out.")
+                    st.exception(e)  # Optional: helpful for debugging
 
 elif menu == "My Palaces" and "user" in st.session_state:
     st.subheader("📚 My Palaces")
