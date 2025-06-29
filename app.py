@@ -233,11 +233,11 @@ elif menu == "Sign Up":
                 st.error("❌ Sign up failed")
 
 elif menu == "Generate" and "user" in st.session_state:
-    col1, col2 = st.columns([3, 1])  # Left: inputs, Right: animation
+    col1, col2 = st.columns([3, 1])
 
     with col1:
         st.subheader("🔮 Generate Memory Palace")
-        topic = st.text_input("📌 Enter a topic to remember")
+        topic = st.text_input("📌 Enter a topic to remember", key="topic_input")
 
         locations = [
             "🏠 My Home",
@@ -247,49 +247,55 @@ elif menu == "Generate" and "user" in st.session_state:
             "✍️ Other (let me type)"
         ]
 
-        choice = st.selectbox("📍 Choose a memory palace location", locations)
-        if choice == "✍️ Other (let me type)":
-            location = st.text_input("📝 Describe your own place")
-        else:
-            location = choice
+        choice = st.selectbox("📍 Choose a memory palace location", locations, key="location_choice")
+        location = st.text_input("📝 Describe your own place") if choice == "✍️ Other (let me type)" else choice
 
     with col2:
         from streamlit_lottie import st_lottie
         from lottie_helper import get_lottie_animation
         st_lottie(get_lottie_animation("brain"), height=120, key="brain_small")
 
-    if st.button("🚀 Generate Palace") and topic and location:
-        try:
-            scene = generate_palace_scene(
-                f"Imagine a vivid, surreal, and fun scene where the concept of '{topic}' is memorably placed inside '{location}' as part of a memory palace. Do not be logical — be imaginative and symbolic."
-            )
+    if st.button("🚀 Generate Palace"):
+        if not topic or not location:
+            st.warning("⚠️ Please enter both a topic and a location.")
+        else:
+            try:
+                with st.spinner("🔄 Generating memory palace..."):
+                    prompt = (
+                        f"Imagine a vivid, surreal, and fun scene where the concept of '{topic}' is memorably placed "
+                        f"inside '{location}' as part of a memory palace. Do not be logical — be imaginative and symbolic."
+                    )
+                    scene = generate_palace_scene(prompt)
 
-            st.success("✅ Memory Palace Generated")
-            st.markdown("### 🧠 English")
-            st.write(scene)
+                st.success("✅ Memory Palace Generated")
+                st.markdown("### 🧠 English")
+                st.write(scene)
 
-            lang_code = st.session_state.get("lang_code", "en")
-            user_lang = st.session_state.get("user_language", "English")
+                # Optional translation
+                lang_code = st.session_state.get("lang_code", "en")
+                user_lang = st.session_state.get("user_language", "English")
 
-            if lang_code != "en":
-                translated_scene = translate_text(scene, lang_code)
-                st.markdown(f"### 🌐 Translated ({user_lang})")
-                st.write(translated_scene)
-            else:
-                translated_scene = ""
+                if lang_code != "en":
+                    translated_scene = translate_text(scene, lang_code)
+                    st.markdown(f"### 🌐 Translated ({user_lang})")
+                    st.write(translated_scene)
+                else:
+                    translated_scene = ""
 
-            db.collection("users").document(st.session_state["user"]["localId"]).collection("palaces").add({
-                "topic": topic,
-                "scene": scene,
-                "translated_scene": translated_scene,
-                "location": location,
-                "created_at": datetime.utcnow()
-            })
+                # Save to Firestore
+                db.collection("users").document(st.session_state["user"]["localId"]).collection("palaces").add({
+                    "topic": topic,
+                    "scene": scene,
+                    "translated_scene": translated_scene,
+                    "location": location,
+                    "created_at": datetime.utcnow()
+                })
 
-            st.success("📂 Palace saved to your collection!")
+                st.success("📂 Palace saved to your collection!")
 
-        except Exception:
-            st.error("❌ Reached Today Limit")
+            except Exception as e:
+                st.error("❌ Reached Today Limit or an error occurred.")
+                st.exception(e)  # Show details for debugging (can remove in prod)
 
 
 elif menu == "My Palaces" and "user" in st.session_state:
