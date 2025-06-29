@@ -174,7 +174,7 @@ def show_user_profile():
             st.session_state.user.update(updated)
             st.success("✅ Profile updated!")
             st.session_state.edit_mode = False
-            st.experimental_rerun()
+            st.rerun()
 
 # --- Main Logic ---
 if menu == "Login":
