@@ -275,12 +275,14 @@ elif menu == "Generate" and "user" in st.session_state:
             st.warning("⚠️ Please enter both a topic and a location.")
         else:
             try:
-                with st.spinner("🔄 Generating memory palace..."):
-                    prompt = (
-                        f"Imagine a vivid, surreal, and fun scene where the concept of '{topic}' is memorably placed "
-                        f"inside '{location}' as part of a memory palace. Do not be logical — be imaginative and symbolic."
-                    )
-                    scene = generate_palace_scene(prompt)
+                with st.spinner("Generating memory palace... Please wait (up to 30 seconds)..."):
+                    try:
+                        # Use st.time() if needed to measure
+                        scene = generate_palace_scene(prompt)
+                        st.success("✅ Memory Palace Generated")
+                    except Exception as e:
+                        st.error("❌ Reached Today Limit or the request timed out.")
+                        st.exception(e)  # Optional for debugging
 
                 st.success("✅ Memory Palace Generated")
                 st.markdown("### 🧠 English")
