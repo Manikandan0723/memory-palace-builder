@@ -213,6 +213,7 @@ elif menu == "Sign Up":
     email = st.text_input("Email")
     password = st.text_input("Password", type="password")
     profession = st.selectbox("Profession", ["Student", "Professional", "Other"])
+
     avatar_options = {
         "🦁 Lion": "https://api.dicebear.com/7.x/adventurer/svg?seed=Lion",
         "🐯 Tiger": "https://api.dicebear.com/7.x/adventurer/svg?seed=Tiger",
@@ -225,9 +226,12 @@ elif menu == "Sign Up":
         "🐶 Dog": "https://api.dicebear.com/7.x/adventurer/svg?seed=Dog",
         "🦊 Fox": "https://api.dicebear.com/7.x/adventurer/svg?seed=Fox"
     }
+
     avatar_name = st.selectbox("Avatar", list(avatar_options.keys()))
     avatar_url = avatar_options[avatar_name]
     st.image(avatar_url, width=100)
+
+    bio = st.text_area("About Me (Optional)", max_chars=300)
 
     if st.button("Sign Up"):
         if not is_valid_email(email) or not name or not username:
@@ -236,16 +240,28 @@ elif menu == "Sign Up":
             try:
                 user = auth.create_user_with_email_and_password(email, password)
                 user_id = user["localId"]
-                db.collection("users").document(user_id).set({
-                    "email": email, "username": username, "name": name,
-                    "profession": profession, "avatar": avatar_url, "bio": ""
-                })
-                user.update({"username": username, "name": name, "avatar": avatar_url})
+
+                user_data = {
+                    "email": email,
+                    "username": username,
+                    "name": name,
+                    "profession": profession,
+                    "avatar": avatar_url,
+                    "bio": bio
+                }
+
+                db.collection("users").document(user_id).set(user_data)
+
+                # Update session
+                user.update(user_data)
                 st.session_state["user"] = user
                 st.success("✅ Account created")
-                st.experimental_rerun()
-            except Exception:
+                st.rerun()
+
+            except Exception as e:
                 st.error("❌ Sign up failed")
+                st.exception(e)  # Optional: for debugging
+
 
 elif menu == "Generate" and "user" in st.session_state:
     col1, col2 = st.columns([3, 1])
