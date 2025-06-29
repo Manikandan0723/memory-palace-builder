@@ -98,26 +98,33 @@ st.title("\U0001F9E0 Memory Palace Builder")
 # --- Sidebar ---
 if "user" not in st.session_state:
     st.sidebar.markdown("## Menu")
-    menu = st.sidebar.radio("", ["Login", "Sign Up"], key="main_menu")
+    menu = st.sidebar.radio("Choose an option", ["Login", "Sign Up"], key="main_menu")
 else:
     user = st.session_state["user"]
-    user_id = user["localId"]
+    user_id = user.get("localId", "")
     display_name = user.get("name") or user.get("username") or user.get("email", "").split("@")[0]
-    st.sidebar.markdown("## Mine")
-    st.sidebar.image(user.get("avatar"), width=36)
-    st.sidebar.markdown(f"\U0001F44B Hello, **{display_name}**")
 
-    language_map = {"English": "en", "Hindi": "hi", "Tamil": "ta", "Telugu": "te", "Kannada": "kn",
-                    "Bengali": "bn", "Marathi": "mr", "Gujarati": "gu", "Malayalam": "ml", "Punjabi": "pa"}
-    selected_lang = st.sidebar.selectbox("\U0001F30D Preferred Language", list(language_map.keys()))
+    st.sidebar.markdown("## Mine")
+    if user.get("avatar"):
+        st.sidebar.image(user["avatar"], width=36)
+    st.sidebar.markdown(f"👋 Hello, **{display_name}**")
+
+    # Language preference
+    language_map = {
+        "English": "en", "Hindi": "hi", "Tamil": "ta", "Telugu": "te", "Kannada": "kn",
+        "Bengali": "bn", "Marathi": "mr", "Gujarati": "gu", "Malayalam": "ml", "Punjabi": "pa"
+    }
+    selected_lang = st.sidebar.selectbox("🌐 Preferred Language", list(language_map.keys()), key="lang_select")
     st.session_state["user_language"] = selected_lang
     st.session_state["lang_code"] = language_map[selected_lang]
 
-    menu = st.sidebar.radio("", ["Generate", "My Palaces", "Profile"], key="mine_menu")
-    if st.sidebar.button("Logout"):
+    # Menu options after login
+    menu = st.sidebar.radio("Navigate", ["Generate", "My Palaces", "Profile"], key="mine_menu")
+
+    # Logout button
+    if st.sidebar.button("🚪 Logout"):
         del st.session_state["user"]
         st.rerun()
-
 
 # --- Profile Section ---
 def show_user_profile():
@@ -172,24 +179,32 @@ def show_user_profile():
 # --- Main Logic ---
 if menu == "Login":
     st.subheader("🔐 Login")
-    email = st.text_input("Email").strip()
-    password = st.text_input("Password", type="password")
+    
+    # Avoid empty label warning
+    email = st.text_input("📧 Email", key="login_email").strip()
+    password = st.text_input("🔒 Password", type="password", key="login_password")
+
     if st.button("Log In"):
         if not is_valid_email(email):
-            st.error("❌ Invalid email")
+            st.error("❌ Invalid email format")
         else:
             try:
                 user = auth.sign_in_with_email_and_password(email, password)
                 user_id = user["localId"]
+
                 user_doc = db.collection("users").document(user_id).get()
-                user.update(user_doc.to_dict() if user_doc.exists else {})
+                if user_doc.exists:
+                    user.update(user_doc.to_dict())
+
+                # Save user info to session
                 st.session_state["user"] = user
-                st.success("✅ Logged in")
-                st.rerun()
+                st.success("✅ Logged in successfully!")
+
+                st.rerun()  # Ensures the app reruns with user in state
+
             except Exception as e:
                 st.error("❌ Login failed: Invalid email or password")
-                # Optionally: log or print(e) for debugging
-
+                # st.warning(str(e))  # Uncomment for debugging
 
 elif menu == "Sign Up":
     st.subheader("📝 Sign Up")
